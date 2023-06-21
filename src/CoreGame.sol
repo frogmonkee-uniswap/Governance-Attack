@@ -2,7 +2,9 @@
 pragma solidity ^0.8.18;
 
 import {Voting} from "./Voting.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// import "openzeppelin/contracts/token/ERC20/ERC20.sol";
+// import "./lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "/Users/frogmonkee/GovernanceAttack/lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract SharesContract is ERC20 {
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
