@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "./lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {Game} from "./CoreGame.sol";
 
 
@@ -16,7 +16,7 @@ contract Voting {
     uint public votingInterval; // How long a single vote lasts
     uint public votingThreshold; // What percentage of yes votes are need
     address public sharesContract; // ERC20 contract
-    address public coreGame; // CoreGame contract
+    address payable public coreGame; // CoreGame contract
     mapping (address => bool) public voteLog; // Mapping if user has voted
     address[] public voterList; // To loop through and clear voteLog
     Vote public voteInstance; // Init Vote struct instance
@@ -28,10 +28,10 @@ contract Voting {
         uint _votingInterval,
         uint _votingThreshold,
         address _sharesContract,
-        address _coreGame
+        address payable _coreGame
     ){
-        votingPeriod = _votingPeriod; // * 3600; // Input in hours converted to seconds
-        votingInterval = _votingInterval; // * 86400; // Input in days converted to seconds
+        votingPeriod = _votingPeriod * 3600; // Input in hours converted to seconds
+        votingInterval = _votingInterval * 86400; // Input in days converted to seconds
         votingThreshold = _votingThreshold;
         sharesContract = _sharesContract;
         coreGame = _coreGame;
@@ -71,8 +71,6 @@ contract Voting {
         passingAmmount = (token.totalSupply() * votingThreshold) / 100; // voting threshold as % of total shares
         if (voteInstance.yes > passingAmmount) {
              Game(coreGame).distribute(); // Calls distributed on CoreGame.sol
-                // Could this have also been implemented using an interface?
-                /// interface Game { function distribute() external; }
         }
         else {
             voteInstance = Vote(0, 0, 0); // Clear voteInstance struct
@@ -84,7 +82,8 @@ contract Voting {
     function vote(bool yesVote) public payable hasNotVoted voteOngoing {
         uint256 balance = token.balanceOf(msg.sender); // local var for msg.sender's token balance
         if (yesVote) { // True = voted Yes
-            require(msg.value >= 1e17, "Voting yes costs 0.1 ETH"); // Hardcoded cost for yes
+            require(msg.value >= 1e17, "Voting yes costs 0.1 ETH"); // Hardcoded as 10% of share price
+            payable(coreGame).transfer(msg.value);
             voteInstance.yes += balance;
         } else {
             voteInstance.no += balance;

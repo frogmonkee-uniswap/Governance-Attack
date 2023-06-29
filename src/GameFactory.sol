@@ -11,10 +11,9 @@ contract GameFactory {
         uint256 _costOfShare, 
         uint256 _votingPeriod, 
         uint256 _votingInterval, 
-        uint256 _votingThreshold, 
-        uint256 _gameEnd) 
-        public returns(address) {
-            coreGame = new Game(_costOfShare, _votingPeriod, _votingInterval, _votingThreshold, _gameEnd);
-            return address(coreGame); // Would this be sent to the FE so user know where the game contract is?
+        uint256 _votingThreshold) 
+        public returns(address payable) {
+            coreGame = new Game(_costOfShare, _votingPeriod, _votingInterval, _votingThreshold);
+            return payable(address(coreGame)); // Would this be sent to the FE so user know where the game contract is?
         }
 }

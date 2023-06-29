@@ -2,9 +2,9 @@
 pragma solidity ^0.8.18;
 
 import {Voting} from "./Voting.sol";
-// import "openzeppelin/contracts/token/ERC20/ERC20.sol";
-// import "./lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "/Users/frogmonkee/GovernanceAttack/lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "forge-std/console.sol";
+
 
 contract SharesContract is ERC20 {
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
@@ -22,7 +22,6 @@ contract Game {
     uint public votingPeriod; // How long between each new vote instance
     uint public votingInterval; // How long a single vote lasts
     uint public votingThreshold; // What percentage of yes votes are need
-    uint public gameEnd; // A time where the Game instance ends
     mapping(address => uint) winnerPayout;
     address[] winnerPayoutIndex; // Keeps index of all addresses in `winnerPayout`
 
@@ -33,17 +32,15 @@ contract Game {
     uint _costOfShare, 
     uint _votingPeriod, 
     uint _votingInterval, 
-    uint _votingThreshold, 
-    uint _gameEnd) 
+    uint _votingThreshold) 
     {
         costOfShare = _costOfShare * 10**18; // Converts into ETH
         votingPeriod = _votingPeriod;
         votingInterval = _votingInterval;
         votingThreshold = _votingThreshold;
-        gameEnd = _gameEnd;
 
-        sharesContract = new SharesContract("TokenTest", "TT"); // Will store address of ERC20 contract
-        votingContract = new Voting(votingPeriod, votingInterval, votingThreshold, address(sharesContract), address(this)); // Will store address of voting contract
+        sharesContract = new SharesContract("GovernanceAttack", "ATK"); // Will store address of ERC20 contract
+        votingContract = new Voting(votingPeriod, votingInterval, votingThreshold, address(sharesContract), payable(address(this))); // Will store address of voting contract
 
     }
     function deposit() public payable returns (uint256) {
@@ -64,12 +61,11 @@ contract Game {
     function distribute() external {
         require(msg.sender == address(votingContract)); // Requires that only voting contract can call distribute
         address votingContractAddress = address(votingContract);
-        uint256 totalYesVotes = Voting(votingContractAddress).getTotalYesVotes(); // sum of all yes votes
-        uint256 totalNoVotes = Voting(votingContractAddress).getTotalNoVotes(); // sum of all no votes
+        uint256 totalYesVotes = Voting(votingContract).getTotalYesVotes(); // sum of all yes votes
         for (uint i=0; i < Voting(votingContractAddress).voterListLength(); i++) { // Calculates payout value for winners
             if(Voting(votingContractAddress).getVoteLog(i)) {
                 uint balance = sharesContract.balanceOf(Voting(votingContractAddress).getVoter(i)); // Balance of tokens
-                uint payout = totalNoVotes * (balance / totalYesVotes) * address(this).balance; // Calculate payout
+                uint payout = balance * address(this).balance / totalYesVotes; // Calculate payout
                 winnerPayout[Voting(votingContractAddress).getVoter(i)] = payout; // Payout mapping
                 winnerPayoutIndex.push(Voting(votingContractAddress).getVoter(i)); // Add to indexed array of winners
             } else {
@@ -79,5 +75,8 @@ contract Game {
         for (uint i=0; i < winnerPayoutIndex.length; i++) { // Pay
             payable(winnerPayoutIndex[i]).transfer(winnerPayout[winnerPayoutIndex[i]]);
         }
+    }
+    receive() external payable {
+
     }
 }
