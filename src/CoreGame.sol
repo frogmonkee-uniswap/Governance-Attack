@@ -23,7 +23,7 @@ contract Game {
     uint public votingInterval; // How long a single vote lasts
     uint public votingThreshold; // What percentage of yes votes are need
     mapping(address => uint) winnerPayout;
-    address[] winnerPayoutIndex; // Keeps index of all addresses in `winnerPayout`
+    address[] public winnerPayoutIndex; // Keeps index of all addresses in `winnerPayout`
 
     Voting public votingContract; // Declare variable to hold voting contract type
     SharesContract public sharesContract; // Declare variable to hold ERC20 contract type
@@ -63,7 +63,7 @@ contract Game {
         address votingContractAddress = address(votingContract);
         uint256 totalYesVotes = Voting(votingContract).getTotalYesVotes(); // sum of all yes votes
         for (uint i=0; i < Voting(votingContractAddress).voterListLength(); i++) { // Calculates payout value for winners
-            if(Voting(votingContractAddress).getVoteLog(i)) {
+            if(Voting(votingContractAddress).getVotedYes(i)) {
                 uint balance = sharesContract.balanceOf(Voting(votingContractAddress).getVoter(i)); // Balance of tokens
                 uint payout = balance * address(this).balance / totalYesVotes; // Calculate payout
                 winnerPayout[Voting(votingContractAddress).getVoter(i)] = payout; // Payout mapping

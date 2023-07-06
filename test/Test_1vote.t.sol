@@ -9,6 +9,7 @@ import "../src/CoreGame.sol";
 import "../src/Voting.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
+// Tests a game that lasts for just one vote
 contract GFTest is Test {
     GameFactory public gameFactory;
     Game public game;

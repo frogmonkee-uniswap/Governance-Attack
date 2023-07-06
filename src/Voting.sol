@@ -3,6 +3,9 @@ pragma solidity ^0.8.18;
 
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {Game} from "./CoreGame.sol";
+import "forge-std/Test.sol";
+import "forge-std/console.sol";
+
 
 
 contract Voting {
@@ -17,8 +20,9 @@ contract Voting {
     uint public votingThreshold; // What percentage of yes votes are need
     address public sharesContract; // ERC20 contract
     address payable public coreGame; // CoreGame contract
-    mapping (address => bool) public voteLog; // Mapping if user has voted
-    address[] public voterList; // To loop through and clear voteLog
+    mapping (address => bool) public didVote; // Mapping if user has voted
+    mapping (address => bool) public votedYes; // Mapping if user has voted "YES"
+    address[] public voterList; // To loop through and clear didVote
     Vote public voteInstance; // Init Vote struct instance
     uint public nextVoteTime; // Next valid vote start time
     IERC20 public token; // Create interface for ERC20
@@ -40,9 +44,8 @@ contract Voting {
         token = IERC20(sharesContract);
     }
 
-
     modifier hasNotVoted() {
-        require(!voteLog[msg.sender], "You've already voted!");
+        require(!didVote[msg.sender], "You've already voted!");
         _; // Checks against mapping of voters to vote struct
     }
 
@@ -74,7 +77,7 @@ contract Voting {
         }
         else {
             voteInstance = Vote(0, 0, 0); // Clear voteInstance struct
-            deleteMapping(); // Clear voteLog mapping
+            deleteMapping(); // Clear didVote mapping
             voterList = new address[](0); // Clear voterList
         }
     }
@@ -88,7 +91,8 @@ contract Voting {
         } else {
             voteInstance.no += balance;
         }
-        voteLog[msg.sender] = yesVote; // Log that user has voted
+        didVote[msg.sender] = true; // Log that user has voted
+        votedYes[msg.sender] = yesVote; // Log what the user voted
         voterList.push(msg.sender); // Add to array of voter addresses
     }
 
@@ -104,17 +108,27 @@ contract Voting {
         return voterList.length;
     }
 
-    function getVoteLog(uint _i) public view returns(bool) {
-        return voteLog[voterList[_i]];
+    function getdidVote2(address _address) public view returns(bool) {
+        return didVote[_address];
     }
+
+    function getdidVote(uint _i) public view returns(bool) {
+        return didVote[voterList[_i]];
+    }
+
+    function getVotedYes(uint _i) public view returns(bool) {
+        return votedYes[voterList[_i]];
+    }
+
 
     function getVoter(uint _i) public view returns(address) {
         return voterList[_i];
     }
 
-    function deleteMapping() internal {
+    function deleteMapping() internal { // Clear didVote and votedYes mapping
         for (uint i=0; i < voterList.length; i++) {
-            delete voteLog[voterList[i]];
-        } // Clear voteLog mapping
+            didVote[voterList[i]] = false;
+            votedYes[voterList[i]] = false;
+        } 
     }
 }
