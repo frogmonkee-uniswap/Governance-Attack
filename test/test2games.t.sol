@@ -29,11 +29,8 @@ contract GFTest is Test {
             // vote threshold = 67%
     }
 
-    function checkGameAddresses() public {
-        console.log(gameFactory.getGameAddresses(1));
-        console.log(address(game1));
-        console.log(gameFactory.getGameAddresses(2));
-        console.log(address(game2));
+    function testGameAddresses() public {
+        // Asserts that address is stored in mapping
         assertEq(gameFactory.getGameAddresses(1), address(game1));
         assertEq(gameFactory.getGameAddresses(2), address(game2));
     }
