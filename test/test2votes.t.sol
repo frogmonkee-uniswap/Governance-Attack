@@ -23,11 +23,12 @@ contract GFTest is Test {
 
     function setUp() public {
         gameFactory = new GameFactory();
-        game = Game(gameFactory.createNewGame(1, 7, 24, 51));
+        game = Game(gameFactory.createNewGame(1, 7, 24, 51, 4));
             // cost of share = 1 eth
             // voting interval = 7 days
             // vote duration = 24 hours
             // vote threshold = 51%
+            // expiration = 4 weeks
         voting = game.votingContract();
         shares = game.sharesContract();
 
@@ -152,6 +153,8 @@ contract GFTest is Test {
         uint256 newTimestamp = block.timestamp + 24 * 60 * 60;
         vm.warp(newTimestamp);
         voting.endVote();
+
+        // Note that when 
         assertEq(userA.balance, 7533333333333333333);
         assertEq(userB.balance, 0);
         assertEq(userC.balance, 0);

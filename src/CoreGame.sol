@@ -19,9 +19,12 @@ contract Game {
     event TotalSharesIssued(address depositor, uint256 shares);
 
     uint public costOfShare; // How much ETH a single share costs
-    uint public votingPeriod; // How long between each new vote instance
-    uint public votingInterval; // How long a single vote lasts
-    uint public votingThreshold; // What percentage of yes votes are need
+    uint public votingPeriod; // How long between each new vote instance (days)
+    uint public votingInterval; // How long a single vote lasts (hours)
+    uint public votingThreshold; // What percentage of yes votes are need (%)
+    uint public expiration; // Game ends if no votes pass (weeks)
+    uint public playerCounter = 0;
+    mapping(uint => address) depositors;
     mapping(address => uint) winnerPayout;
     address[] public winnerPayoutIndex; // Keeps index of all addresses in `winnerPayout`
 
@@ -32,18 +35,25 @@ contract Game {
     uint _costOfShare, 
     uint _votingPeriod, 
     uint _votingInterval, 
-    uint _votingThreshold) 
+    uint _votingThreshold,
+    uint _expiration) 
     {
         costOfShare = _costOfShare * 10**18; // Converts into ETH
         votingPeriod = _votingPeriod;
         votingInterval = _votingInterval;
         votingThreshold = _votingThreshold;
+        expiration = (_expiration * 604800) + block.timestamp; // Converts weeks into seconds
 
         sharesContract = new SharesContract("GovernanceAttack", "ATK"); // Will store address of ERC20 contract
-        votingContract = new Voting(votingPeriod, votingInterval, votingThreshold, address(sharesContract), payable(address(this))); // Will store address of voting contract
+        votingContract = new Voting(votingPeriod, votingInterval, votingThreshold, expiration, address(sharesContract), payable(address(this))); // Will store address of voting contract
 
     }
-    function deposit() public payable returns (uint256) {
+    modifier gameOngoing() {
+        require(block.timestamp < expiration, "This game has expired.");
+        _; // Checks if the game has passed it expiry timestamp
+    }
+
+    function deposit() public payable gameOngoing returns (uint256) {
         // Require that vote is not ongoing
         uint256 quotient = msg.value / costOfShare; // Shares issued
         uint256 remainder = msg.value % costOfShare; // Remainder to be reverted
@@ -54,6 +64,8 @@ contract Game {
         }
         sharesContract.mintShares(msg.sender, quotient); // Mints ERC20 token as shares
         uint shares = sharesContract.balanceOf(msg.sender);
+        playerCounter +=1; // Increment player counter
+        depositors[playerCounter] = msg.sender; // Log depositor in mapping
         emit TotalSharesIssued(msg.sender, shares); // Emits alert for # of shares owned
         return shares; // # of total shares
     }
@@ -76,7 +88,19 @@ contract Game {
             payable(winnerPayoutIndex[i]).transfer(winnerPayout[winnerPayoutIndex[i]]);
         }
     }
-    receive() external payable {
 
+    function endGame() public {
+        // The additional ETH deposited with "Yes" votes is distributed pro-rata among all depositors, not back to those who voted "Yes". This is because I'm lazy. 
+        require(block.timestamp >= expiration, "Game is still ongoing.");
+        uint256 totalSupply = sharesContract.totalSupply();
+        uint256 balance = address(this).balance;
+        for (uint256 i = 1 ; i <= playerCounter; i++) {
+            uint256 shares = sharesContract.balanceOf(depositors[i]);
+            uint256 amountRefunded =  balance * shares / totalSupply;
+            payable(depositors[i]).transfer(amountRefunded);
+        }
+    }
+
+    receive() external payable {
     }
 }

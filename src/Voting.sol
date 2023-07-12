@@ -15,9 +15,10 @@ contract Voting {
         uint timeEnd; // Time at when vote is invalid
     }
 
-    uint public votingPeriod; // How long between each new vote instance
-    uint public votingInterval; // How long a single vote lasts
-    uint public votingThreshold; // What percentage of yes votes are need
+    uint public votingPeriod; // How long between each new vote instance (days)
+    uint public votingInterval; // How long a single vote lasts (hours)
+    uint public votingThreshold; // What percentage of yes votes are need (%)
+    uint public expiration; // Game ends if no votes pass (weeks)
     address public sharesContract; // ERC20 contract
     address payable public coreGame; // CoreGame contract
     mapping (address => bool) public didVote; // Mapping if user has voted
@@ -31,17 +32,24 @@ contract Voting {
         uint _votingPeriod,
         uint _votingInterval,
         uint _votingThreshold,
+        uint _expiration,
         address _sharesContract,
         address payable _coreGame
     ){
         votingPeriod = _votingPeriod * 3600; // Input in hours converted to seconds
         votingInterval = _votingInterval * 86400; // Input in days converted to seconds
+        expiration = _expiration; // Already converted to weeks in `Game` contract
         votingThreshold = _votingThreshold;
         sharesContract = _sharesContract;
         coreGame = _coreGame;
         voteInstance = Vote(0, 0, block.timestamp + votingPeriod); // Initialize Vote struct
         nextVoteTime = block.timestamp + votingInterval; // Next valid vote instance
         token = IERC20(sharesContract);
+    }
+
+    modifier gameOngoing() {
+        require(block.timestamp < expiration, "Game has ended");
+        _;
     }
 
     modifier hasNotVoted() {
@@ -64,7 +72,7 @@ contract Voting {
         _; // Voting interval must have passed
     }
 
-    function createVote() public voteConcluded voteStandby {
+    function createVote() public voteConcluded voteStandby gameOngoing {
         voteInstance = Vote(0, 0, block.timestamp + votingPeriod); // Reset vote with new timeEnd
         nextVoteTime = block.timestamp + votingInterval; // Set new time for next valid vote
     }
@@ -73,7 +81,10 @@ contract Voting {
         uint passingAmmount;
         passingAmmount = (token.totalSupply() * votingThreshold) / 100; // voting threshold as % of total shares
         if (voteInstance.yes > passingAmmount) {
-             Game(coreGame).distribute(); // Calls distributed on CoreGame.sol
+             Game(coreGame).distribute(); // Calls `distribute` on CoreGame.sol
+        }
+        else if (block.timestamp > expiration) {
+            Game(coreGame).endGame(); // If vote has concluded and game has ended, call `endGame` on CoreGame.sol
         }
         else {
             voteInstance = Vote(0, 0, 0); // Clear voteInstance struct

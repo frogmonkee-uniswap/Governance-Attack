@@ -16,17 +16,19 @@ contract GFTest is Test {
 
     function setUp() public {
         gameFactory = new GameFactory();
-        game1 = Game(gameFactory.createNewGame(1, 7, 24, 51));
+        game1 = Game(gameFactory.createNewGame(1, 7, 24, 51, 4));
             // cost of share = 1 eth
             // voting interval = 7 days
             // vote duration = 24 hours
             // vote threshold = 51%
+            // expiration = 4 weeks
 
-        game2 = Game(gameFactory.createNewGame(2, 14, 12, 67));
+        game2 = Game(gameFactory.createNewGame(2, 14, 12, 67, 8));
             // cost of share = 2 eth
             // voting interval = 14 days
             // vote duration = 12 hours
             // vote threshold = 67%
+            // expiration = 8 weeks
     }
 
     function testGameAddresses() public {

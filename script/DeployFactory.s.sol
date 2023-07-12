@@ -11,7 +11,7 @@ contract deployFactoryScript is Script {
     function run() public {
         vm.startBroadcast();
         GameFactory GFContract = new GameFactory();
-        GFContract.createNewGame(1, 24, 7, 51);
+        GFContract.createNewGame(1, 24, 7, 51, 4);
         vm.stopBroadcast();
     }
 }
