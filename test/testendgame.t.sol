@@ -84,7 +84,7 @@ contract GFTest is Test {
     }
 
 
-    function testPassingVote() public {
+    function testUnsuccessfulVote() public {
         /*
         +--------+----------------+
         |  User  | Deposit Amount |
@@ -110,7 +110,7 @@ contract GFTest is Test {
         | User  | Vote | Vote Weight |
         +-------+------+-------------+
         | UserA | Yes  |           4 |
-        | UserB | Yes  |           3 |
+        | UserB | No   |           3 |
         | UserC | No   |           2 |
         | UserD | No   |           2 |
         +-------+------+-------------+
@@ -135,5 +135,4 @@ contract GFTest is Test {
         assertEq(2018181818181818181, userC.balance);
         assertEq(2018181818181818181, userD.balance);
     }
-
 }
