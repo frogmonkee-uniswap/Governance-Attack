@@ -1,5 +1,7 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
+
+// This test doesn't run for some reason...
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -27,15 +29,12 @@ contract GFTest is Test {
             // vote threshold = 67%
     }
 
-    function testCreation() public view {
+    function checkGameAddresses() public {
+        console.log(gameFactory.getGameAddresses(1));
         console.log(address(game1));
-//        address addy1 = address(gameFactory).gameAddresses[1];
-//      console.log(addy1);
-//      assertEq(address(game1), addy1);
+        console.log(gameFactory.getGameAddresses(2));
         console.log(address(game2));
-//      address addy2 = gameFactory.gameAddresses[2];
-//      console.log(addy2);
-//      assertEq(address(game2), addy2);
-
+        assertEq(gameFactory.getGameAddresses(1), address(game1));
+        assertEq(gameFactory.getGameAddresses(2), address(game2));
     }
 }

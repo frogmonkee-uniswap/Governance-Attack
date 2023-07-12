@@ -6,6 +6,7 @@ import {Game} from "./CoreGame.sol";
 
 contract GameFactory {
     uint256 internal gameCount = 0;
+    uint256 public number = 0;
     Game public coreGame; // Address for deployed CoreGame.sol contract
     mapping(uint256 => address) public gameAddresses;
 
@@ -20,4 +21,8 @@ contract GameFactory {
             gameAddresses[gameCount] = address(coreGame);
             return payable(address(coreGame)); // Would this be sent to the FE so user know where the game contract is?
         }
+    
+    function getGameAddresses(uint256 _i) public view returns(address) {
+        return gameAddresses[_i];
+    }
 }
